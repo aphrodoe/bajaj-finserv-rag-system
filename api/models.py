@@ -1,8 +1,11 @@
 from pydantic import BaseModel
+from typing import List
+
 
 class Query(BaseModel):
     documents: str
-    questions: list[str]
+    questions: List[str]
+
 
 class Response(BaseModel):
-    answers: list[str]
+    answers: List[str]
