@@ -24,25 +24,32 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 genai.configure(api_key=GOOGLE_API_KEY)
 
+processor = DocumentProcessor()
+
 
 def generate_answer_with_context(question: str, context_chunks: list) -> str:
 
     if not context_chunks:
         return "I couldn't find relevant information in the document to answer this question."
     
-    context = "\n\n".join([chunk["text"] for chunk in context_chunks[:3]])
+    context = "\n\n".join([chunk["text"] for chunk in context_chunks])
     
-    prompt = f"""Based on the following document content, please answer the question accurately and concisely.
+    prompt = f"""You are an expert Q&A system. Your task is to answer the user's question based *only* on the provided document context.
+Analyze the context below and provide a concise, factual answer to the question.
+If the answer cannot be found in the provided context, state "The provided document does not contain information to answer this question." Do not use any external knowledge.
 
-Document Content:
+[Document Context]
 {context}
+[/Document Context]
 
-Question: {question}
+[Question]
+{question}
+[/Question]
 
-Please provide a direct, accurate answer based only on the information provided in the document content above. If the information is not available in the provided content, please state that clearly."""
+Answer:"""
 
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
@@ -60,8 +67,6 @@ async def run_hackrx(query: Query, credentials: HTTPAuthorizationCredentials = D
         )
 
     try:
-        processor = DocumentProcessor()
-
         process_result = processor.process_and_store_document(query.documents)
         
         if not process_result["success"]:
